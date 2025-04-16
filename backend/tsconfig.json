@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "CommonJS",
+    "rootDir": "src",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "sourceMap": true,              
+    "moduleResolution": "Node",    
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/@types"
+    ]
+  },
+  "include": ["src"],
+  "files": [
+    "src/@types/express/index.d.ts"
+  ]
+}

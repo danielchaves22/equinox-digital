@@ -1,0 +1,47 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+model User {
+  id        Int           @id @default(autoincrement())
+  email     String        @unique
+  password  String
+  name      String
+  companies UserCompany[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Company {
+  id        Int            @id @default(autoincrement())
+  name      String
+  address   String?
+  users     UserCompany[]
+  groups    CompanyGroup[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model CompanyGroup {
+  id        Int       @id @default(autoincrement())
+  name      String
+  companies Company[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model UserCompany {
+  userId    Int
+  companyId Int
+
+  user    User    @relation(fields: [userId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@id([userId, companyId])
+}
