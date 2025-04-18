@@ -1,12 +1,16 @@
 import { Router } from 'express';
-import { createCompany, listCompanies } from '../controllers/company.controller';
+import {
+  createCompany,
+  listCompanies,
+  updateCompany,
+  deleteCompany
+} from '../controllers/company.controller';
 
 const router = Router();
 
-// Endpoint para criação de nova empresa
-router.post('/', createCompany);
-
-// Endpoint para listar empresas
-router.get('/', listCompanies);
+router.post('/', createCompany);       // Criar
+router.get('/', listCompanies);        // Listar
+router.put('/:id', updateCompany);     // Atualizar
+router.delete('/:id', deleteCompany);  // Excluir
 
 export default router;

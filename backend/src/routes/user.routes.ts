@@ -1,12 +1,18 @@
 import { Router } from 'express';
-import { getUsers, getUserById } from '../controllers/user.controller';
+import {
+  createUser,
+  getUsers,
+  getUserById,
+  updateUser,
+  deleteUser
+} from '../controllers/user.controller';
 
 const router = Router();
 
-// Endpoint para listar usuários
-router.get('/', getUsers);
-
-// Endpoint para buscar um usuário pelo ID
-router.get('/:id', getUserById);
+router.post('/', createUser);         // Criar usuário
+router.get('/', getUsers);            // Listar usuários
+router.get('/:id', getUserById);      // Detalhar usuário
+router.put('/:id', updateUser);       // Atualizar usuário
+router.delete('/:id', deleteUser);    // Excluir usuário
 
 export default router;
