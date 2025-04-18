@@ -1,18 +1,20 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import CompanyService from '../services/company.service';
 
 const prisma = new PrismaClient();
 
 /**
- * Extrai do req.user o campo `role` já tipado como string.
+ * Extrai do token o role do usuário autenticado.
  */
 function getUserContext(req: Request): { role: string } {
   // @ts-ignore
-  const role = req.user.role as string;
-  return { role };
+  return { role: req.user.role as string };
 }
 
-// CREATE — agora auto‑incrementa `code` pela aplicação
+/**
+ * POST /api/companies
+ */
 export const createCompany = async (req: Request, res: Response) => {
   const { role } = getUserContext(req);
   if (role !== 'ADMIN') {
@@ -25,22 +27,7 @@ export const createCompany = async (req: Request, res: Response) => {
   }
 
   try {
-    // 1) Busca o maior code existente
-    const result = await prisma.company.aggregate({
-      _max: { code: true }
-    });
-    const maxCode = result._max.code ?? -1;
-    const nextCode = maxCode + 1;
-
-    // 2) Cria a nova empresa com code = nextCode
-    const company = await prisma.company.create({
-      data: {
-        name,
-        address,
-        code: nextCode
-      }
-    });
-
+    const company = await CompanyService.createCompany({ name, address });
     return res.status(201).json(company);
   } catch (error) {
     console.error('Erro ao criar empresa:', error);
@@ -48,7 +35,9 @@ export const createCompany = async (req: Request, res: Response) => {
   }
 };
 
-// READ (list)
+/**
+ * GET /api/companies
+ */
 export const listCompanies = async (req: Request, res: Response) => {
   const { role } = getUserContext(req);
   if (role !== 'ADMIN') {
@@ -56,17 +45,7 @@ export const listCompanies = async (req: Request, res: Response) => {
   }
 
   try {
-    const companies = await prisma.company.findMany({
-      select: {
-        id: true,
-        name: true,
-        address: true,
-        code: true,
-        createdAt: true,
-        updatedAt: true
-      },
-      orderBy: { code: 'asc' }
-    });
+    const companies = await CompanyService.listCompanies();
     return res.status(200).json(companies);
   } catch (error) {
     console.error('Erro ao listar empresas:', error);
@@ -74,7 +53,9 @@ export const listCompanies = async (req: Request, res: Response) => {
   }
 };
 
-// UPDATE
+/**
+ * PUT /api/companies/:id
+ */
 export const updateCompany = async (req: Request, res: Response) => {
   const { role } = getUserContext(req);
   if (role !== 'ADMIN') {
@@ -88,13 +69,7 @@ export const updateCompany = async (req: Request, res: Response) => {
   }
 
   try {
-    const company = await prisma.company.update({
-      where: { id },
-      data: {
-        ...(name !== undefined ? { name } : {}),
-        ...(address !== undefined ? { address } : {})
-      }
-    });
+    const company = await CompanyService.updateCompany(id, { name, address });
     return res.status(200).json(company);
   } catch (error) {
     console.error(`Erro ao atualizar empresa ${id}:`, error);
@@ -102,7 +77,9 @@ export const updateCompany = async (req: Request, res: Response) => {
   }
 };
 
-// DELETE
+/**
+ * DELETE /api/companies/:id
+ */
 export const deleteCompany = async (req: Request, res: Response) => {
   const { role } = getUserContext(req);
   if (role !== 'ADMIN') {
@@ -115,7 +92,7 @@ export const deleteCompany = async (req: Request, res: Response) => {
   }
 
   try {
-    await prisma.company.delete({ where: { id } });
+    await CompanyService.deleteCompany(id);
     return res.status(204).send();
   } catch (error) {
     console.error(`Erro ao excluir empresa ${id}:`, error);

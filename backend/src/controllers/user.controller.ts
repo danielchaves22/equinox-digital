@@ -1,12 +1,15 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 import { PrismaClient, Role } from '@prisma/client';
+import UserService from '../services/user.service';
 
 const prisma = new PrismaClient();
-const EQUINOX_COMPANY_CODE = 0; // Código que identifica a Equinox
+const EQUINOX_COMPANY_CODE = 0;
 
-function getUserContext(req: Request) {
-  // @ts-ignore
+/**
+ * Extrai do token os dados de contexto do usuário autenticado.
+ */
+function getUserContext(req: Request): { userId: number; role: Role; companyIds: number[] } {
+  // @ts-ignore — preenchido pelo authMiddleware
   const { userId, role, companyIds } = req.user;
   return {
     userId: userId as number,
@@ -15,7 +18,9 @@ function getUserContext(req: Request) {
   };
 }
 
-// CREATE
+/**
+ * POST /api/users
+ */
 export const createUser = async (req: Request, res: Response) => {
   const { role, companyIds } = getUserContext(req);
   const { email, password, name, newRole, companyId } = req.body;
@@ -27,7 +32,7 @@ export const createUser = async (req: Request, res: Response) => {
     return res.status(403).json({ error: 'Acesso negado: USER não pode criar usuários.' });
   }
   if (role === 'SUPERUSER' && !companyIds.includes(Number(companyId))) {
-    return res.status(403).json({ error: 'Acesso negado: não pode criar usuário fora da sua empresa.' });
+    return res.status(403).json({ error: 'SUPERUSER não pode criar usuário fora da sua empresa.' });
   }
 
   // Determina o role a atribuir
@@ -38,7 +43,9 @@ export const createUser = async (req: Request, res: Response) => {
     }
     const equinox = await prisma.company.findUnique({ where: { code: EQUINOX_COMPANY_CODE } });
     if (!equinox || Number(companyId) !== equinox.id) {
-      return res.status(403).json({ error: 'ADMIN só pode criar outro ADMIN vinculado à Equinox.' });
+      return res
+        .status(403)
+        .json({ error: 'ADMIN só pode criar outro ADMIN vinculado à Equinox.' });
     }
     roleToAssign = 'ADMIN';
   } else if (newRole === 'SUPERUSER') {
@@ -50,99 +57,69 @@ export const createUser = async (req: Request, res: Response) => {
   }
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-        role: roleToAssign
-      }
+    const created = await UserService.createUser({
+      email,
+      password,
+      name,
+      role: roleToAssign,
+      companyId: Number(companyId)
     });
-    await prisma.userCompany.create({
-      data: {
-        userId: user.id,
-        companyId: Number(companyId),
-        isDefault: true
-      }
-    });
-    return res.status(201).json({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
-    });
+    return res.status(201).json(created);
   } catch (error) {
     console.error('Erro ao criar usuário:', error);
     return res.status(500).json({ error: 'Erro interno ao criar usuário.' });
   }
 };
 
-// READ — list all
+/**
+ * GET /api/users
+ */
 export const getUsers = async (req: Request, res: Response) => {
   const { role, companyIds, userId: me } = getUserContext(req);
 
-  try {
-    let users;
-    if (role === 'ADMIN') {
-      users = await prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-          companies: {
-            select: {
-              isDefault: true,
-              company: { select: { id: true, name: true, code: true } }
-            }
-          }
-        }
-      });
-    } else if (role === 'SUPERUSER') {
-      users = await prisma.user.findMany({
-        where: { companies: { some: { companyId: { in: companyIds } } } },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-          companies: {
-            where: { companyId: { in: companyIds } },
-            select: {
-              isDefault: true,
-              company: { select: { id: true, name: true, code: true } }
-            }
-          }
-        }
-      });
-    } else {
-      // USER: só retorna a si próprio
-      const u = await prisma.user.findUnique({
-        where: { id: me },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-          companies: {
-            select: {
-              isDefault: true,
-              company: { select: { id: true, name: true, code: true } }
-            }
-          }
-        }
-      });
-      users = u ? [u] : [];
+  const baseCompaniesSelect = {
+    select: {
+      isDefault: true,
+      company: { select: { id: true, name: true, code: true } }
     }
+  };
+
+  const baseSelect = {
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+      companies: baseCompaniesSelect
+    }
+  };
+
+  let args: any;
+  if (role === 'ADMIN') {
+    args = baseSelect;
+  } else if (role === 'SUPERUSER') {
+    args = {
+      where: { companies: { some: { companyId: { in: companyIds } } } },
+      select: {
+        ...baseSelect.select,
+        companies: {
+          where: { companyId: { in: companyIds } },
+          select: baseCompaniesSelect.select
+        }
+      }
+    };
+  } else {
+    // USER
+    args = {
+      where: { id: me },
+      ...baseSelect
+    };
+  }
+
+  try {
+    const users = await UserService.listUsers(args);
     return res.status(200).json(users);
   } catch (error) {
     console.error('Erro ao listar usuários:', error);
@@ -150,7 +127,9 @@ export const getUsers = async (req: Request, res: Response) => {
   }
 };
 
-// READ — by id
+/**
+ * GET /api/users/:id
+ */
 export const getUserById = async (req: Request, res: Response) => {
   const { role, companyIds, userId: me } = getUserContext(req);
   const id = Number(req.params.id);
@@ -158,44 +137,31 @@ export const getUserById = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'ID de usuário inválido.' });
   }
 
+  const baseSelect = {
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+      companies: {
+        select: {
+          isDefault: true,
+          company: { select: { id: true, name: true, code: true } }
+        }
+      }
+    }
+  };
+
   try {
-    let user;
+    let user = null;
     if (role === 'ADMIN') {
-      user = await prisma.user.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-          companies: {
-            select: {
-              isDefault: true,
-              company: { select: { id: true, name: true, code: true } }
-            }
-          }
-        }
-      });
+      user = await UserService.findUnique({ where: { id }, ...baseSelect });
     } else if (role === 'SUPERUSER') {
-      user = await prisma.user.findFirst({
+      user = await UserService.findFirst({
         where: { id, companies: { some: { companyId: { in: companyIds } } } },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-          companies: {
-            where: { companyId: { in: companyIds } },
-            select: {
-              isDefault: true,
-              company: { select: { id: true, name: true, code: true } }
-            }
-          }
-        }
+        ...baseSelect
       });
       if (!user) {
         return res.status(403).json({ error: 'Acesso negado a este usuário.' });
@@ -204,29 +170,15 @@ export const getUserById = async (req: Request, res: Response) => {
       if (id !== me) {
         return res.status(403).json({ error: 'Acesso negado: só pode ver seu próprio perfil.' });
       }
-      user = await prisma.user.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-          companies: {
-            select: {
-              isDefault: true,
-              company: { select: { id: true, name: true, code: true } }
-            }
-          }
-        }
-      });
+      user = await UserService.findUnique({ where: { id }, ...baseSelect });
     }
+
     if (!user) {
       return res
         .status(role === 'ADMIN' ? 404 : 403)
         .json({ error: role === 'ADMIN' ? 'Usuário não encontrado.' : 'Acesso negado a este usuário.' });
     }
+
     return res.status(200).json(user);
   } catch (error) {
     console.error(`Erro ao buscar usuário ${id}:`, error);
@@ -234,7 +186,9 @@ export const getUserById = async (req: Request, res: Response) => {
   }
 };
 
-// UPDATE
+/**
+ * PUT /api/users/:id
+ */
 export const updateUser = async (req: Request, res: Response) => {
   const { role, companyIds, userId: me } = getUserContext(req);
   const id = Number(req.params.id);
@@ -247,6 +201,7 @@ export const updateUser = async (req: Request, res: Response) => {
     return res.status(403).json({ error: 'Você não pode alterar seu próprio role.' });
   }
 
+  // Verifica permissão de edição
   if (role === 'SUPERUSER') {
     const assoc = await prisma.userCompany.findFirst({
       where: { userId: id, companyId: { in: companyIds } }
@@ -258,10 +213,11 @@ export const updateUser = async (req: Request, res: Response) => {
     if (id !== me || newRole) {
       return res
         .status(403)
-        .json({ error: 'USER só pode editar seu próprio perfil sem alterar role.' });
+        .json({ error: 'USER só pode editar seu próprio perfil e não pode alterar role.' });
     }
   }
 
+  // Controle de role
   if (newRole) {
     if (newRole === 'ADMIN') {
       if (role !== 'ADMIN') {
@@ -291,11 +247,12 @@ export const updateUser = async (req: Request, res: Response) => {
     const data: any = {};
     if (email) data.email = email;
     if (name) data.name = name;
-    if (password) data.password = await bcrypt.hash(password, 10);
-    if (newRole && (role === 'ADMIN' || role === 'SUPERUSER')) {
-      data.role = newRole;
-    }
+    if (password) data.password = password;
+    if (newRole) data.role = newRole;
 
+    const updated = await UserService.updateUser(id, data);
+
+    // Atualiza associação default de empresa se necessário (apenas ADMIN)
     if (companyId !== undefined && role === 'ADMIN') {
       await prisma.userCompany.updateMany({
         where: { userId: id },
@@ -308,31 +265,19 @@ export const updateUser = async (req: Request, res: Response) => {
       });
     }
 
-    const user = await prisma.user.update({
-      where: { id },
-      data,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    });
-
-    return res.status(200).json(user);
+    return res.status(200).json(updated);
   } catch (error) {
     console.error(`Erro ao atualizar usuário ${id}:`, error);
     return res.status(500).json({ error: 'Erro interno ao atualizar usuário.' });
   }
 };
 
-// DELETE
+/**
+ * DELETE /api/users/:id
+ */
 export const deleteUser = async (req: Request, res: Response) => {
   const { role, companyIds } = getUserContext(req);
   const id = Number(req.params.id);
-
   if (isNaN(id)) {
     return res.status(400).json({ error: 'ID de usuário inválido.' });
   }
@@ -349,7 +294,7 @@ export const deleteUser = async (req: Request, res: Response) => {
   }
 
   try {
-    await prisma.user.delete({ where: { id } });
+    await UserService.deleteUser(id);
     return res.status(204).send();
   } catch (error) {
     console.error(`Erro ao excluir usuário ${id}:`, error);
