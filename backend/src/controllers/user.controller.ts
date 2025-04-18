@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient, Role } from '@prisma/client';
 import UserService from '../services/user.service';
+import { logger } from '../utils/logger';
 
 const prisma = new PrismaClient();
 const EQUINOX_COMPANY_CODE = 0;
@@ -9,7 +10,7 @@ const EQUINOX_COMPANY_CODE = 0;
  * Extrai do token os dados de contexto do usuário autenticado.
  */
 function getUserContext(req: Request): { userId: number; role: Role; companyIds: number[] } {
-  // @ts-ignore — preenchido pelo authMiddleware
+  // @ts-ignore
   const { userId, role, companyIds } = req.user;
   return {
     userId: userId as number,
@@ -35,7 +36,6 @@ export const createUser = async (req: Request, res: Response) => {
     return res.status(403).json({ error: 'SUPERUSER não pode criar usuário fora da sua empresa.' });
   }
 
-  // Determina o role a atribuir
   let roleToAssign: Role = 'USER';
   if (newRole === 'ADMIN') {
     if (role !== 'ADMIN') {
@@ -66,7 +66,7 @@ export const createUser = async (req: Request, res: Response) => {
     });
     return res.status(201).json(created);
   } catch (error) {
-    console.error('Erro ao criar usuário:', error);
+    logger.error('Erro ao criar usuário:', error);
     return res.status(500).json({ error: 'Erro interno ao criar usuário.' });
   }
 };
@@ -83,7 +83,6 @@ export const getUsers = async (req: Request, res: Response) => {
       company: { select: { id: true, name: true, code: true } }
     }
   };
-
   const baseSelect = {
     select: {
       id: true,
@@ -111,7 +110,6 @@ export const getUsers = async (req: Request, res: Response) => {
       }
     };
   } else {
-    // USER
     args = {
       where: { id: me },
       ...baseSelect
@@ -122,7 +120,7 @@ export const getUsers = async (req: Request, res: Response) => {
     const users = await UserService.listUsers(args);
     return res.status(200).json(users);
   } catch (error) {
-    console.error('Erro ao listar usuários:', error);
+    logger.error('Erro ao listar usuários:', error);
     return res.status(500).json({ error: 'Erro interno ao listar usuários.' });
   }
 };
@@ -181,7 +179,7 @@ export const getUserById = async (req: Request, res: Response) => {
 
     return res.status(200).json(user);
   } catch (error) {
-    console.error(`Erro ao buscar usuário ${id}:`, error);
+    logger.error(`Erro ao buscar usuário ${id}:`, error);
     return res.status(500).json({ error: 'Erro interno ao buscar usuário.' });
   }
 };
@@ -201,7 +199,6 @@ export const updateUser = async (req: Request, res: Response) => {
     return res.status(403).json({ error: 'Você não pode alterar seu próprio role.' });
   }
 
-  // Verifica permissão de edição
   if (role === 'SUPERUSER') {
     const assoc = await prisma.userCompany.findFirst({
       where: { userId: id, companyId: { in: companyIds } }
@@ -217,7 +214,6 @@ export const updateUser = async (req: Request, res: Response) => {
     }
   }
 
-  // Controle de role
   if (newRole) {
     if (newRole === 'ADMIN') {
       if (role !== 'ADMIN') {
@@ -252,7 +248,6 @@ export const updateUser = async (req: Request, res: Response) => {
 
     const updated = await UserService.updateUser(id, data);
 
-    // Atualiza associação default de empresa se necessário (apenas ADMIN)
     if (companyId !== undefined && role === 'ADMIN') {
       await prisma.userCompany.updateMany({
         where: { userId: id },
@@ -267,7 +262,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
     return res.status(200).json(updated);
   } catch (error) {
-    console.error(`Erro ao atualizar usuário ${id}:`, error);
+    logger.error(`Erro ao atualizar usuário ${id}:`, error);
     return res.status(500).json({ error: 'Erro interno ao atualizar usuário.' });
   }
 };
@@ -297,7 +292,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     await UserService.deleteUser(id);
     return res.status(204).send();
   } catch (error) {
-    console.error(`Erro ao excluir usuário ${id}:`, error);
+    logger.error(`Erro ao excluir usuário ${id}:`, error);
     return res.status(500).json({ error: 'Erro interno ao excluir usuário.' });
   }
 };

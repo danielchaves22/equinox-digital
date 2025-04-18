@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import CompanyService from '../services/company.service';
+import { logger } from '../utils/logger';
 
 const prisma = new PrismaClient();
 
@@ -8,7 +9,7 @@ const prisma = new PrismaClient();
  * Extrai do token o role do usuário autenticado.
  */
 function getUserContext(req: Request): { role: string } {
-  // @ts-ignore
+  // @ts-ignore — preenchido pelo authMiddleware
   return { role: req.user.role as string };
 }
 
@@ -30,7 +31,7 @@ export const createCompany = async (req: Request, res: Response) => {
     const company = await CompanyService.createCompany({ name, address });
     return res.status(201).json(company);
   } catch (error) {
-    console.error('Erro ao criar empresa:', error);
+    logger.error('Erro ao criar empresa:', error);
     return res.status(500).json({ error: 'Erro interno ao criar empresa.' });
   }
 };
@@ -48,7 +49,7 @@ export const listCompanies = async (req: Request, res: Response) => {
     const companies = await CompanyService.listCompanies();
     return res.status(200).json(companies);
   } catch (error) {
-    console.error('Erro ao listar empresas:', error);
+    logger.error('Erro ao listar empresas:', error);
     return res.status(500).json({ error: 'Erro interno ao listar empresas.' });
   }
 };
@@ -72,7 +73,7 @@ export const updateCompany = async (req: Request, res: Response) => {
     const company = await CompanyService.updateCompany(id, { name, address });
     return res.status(200).json(company);
   } catch (error) {
-    console.error(`Erro ao atualizar empresa ${id}:`, error);
+    logger.error(`Erro ao atualizar empresa ${id}:`, error);
     return res.status(500).json({ error: 'Erro interno ao atualizar empresa.' });
   }
 };
@@ -95,7 +96,7 @@ export const deleteCompany = async (req: Request, res: Response) => {
     await CompanyService.deleteCompany(id);
     return res.status(204).send();
   } catch (error) {
-    console.error(`Erro ao excluir empresa ${id}:`, error);
+    logger.error(`Erro ao excluir empresa ${id}:`, error);
     return res.status(500).json({ error: 'Erro interno ao excluir empresa.' });
   }
 };
