@@ -38,14 +38,12 @@ export default class UserService {
       data: { userId: user.id, companyId, isDefault: true }
     });
 
-    // Removendo password antes de retornar
     const { password: _, ...rest } = user;
     return rest;
   }
 
   /**
    * Busca por chave única (por exemplo, id) com qualquer seleção/include.
-   * O cast resolve o conflito de tipagem.
    */
   static async findUnique<T extends Prisma.UserFindUniqueArgs>(
     args: T
@@ -56,7 +54,6 @@ export default class UserService {
 
   /**
    * Busca o primeiro registro que satisfaz um filtro qualquer.
-   * O cast resolve o conflito de tipagem.
    */
   static async findFirst<T extends Prisma.UserFindFirstArgs>(
     args: T
@@ -67,7 +64,6 @@ export default class UserService {
 
   /**
    * Lista muitos usuários com qualquer filtro/seleção.
-   * O cast resolve o conflito de tipagem.
    */
   static async listUsers<T extends Prisma.UserFindManyArgs>(
     args: T
@@ -96,9 +92,12 @@ export default class UserService {
   }
 
   /**
-   * Exclui usuário pelo ID.
+   * Exclui usuário pelo ID, removendo antes as associações para evitar violação de FK.
    */
   static async deleteUser(id: number): Promise<void> {
+    // Remove associações na tabela UserCompany
+    await prisma.userCompany.deleteMany({ where: { userId: id } });
+    // Agora deleta o usuário
     await prisma.user.delete({ where: { id } });
   }
 }
