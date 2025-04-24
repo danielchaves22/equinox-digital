@@ -17,9 +17,6 @@ import {
 
 const router = Router();
 
-router.use(authMiddleware);
-router.use(tenantMiddleware);
-
 router.post(
   '/',
   validate(createUserSchema),

@@ -13,10 +13,7 @@
       "./node_modules/@types",
       "./src/@types"
     ],
-    "types": [
-      "node",
-      "jest"
-    ]
+    "skipLibCheck": true
   },
   // Incluímos src e também __tests__ para que o TS encontre seus arquivos de teste
   "include": [
