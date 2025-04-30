@@ -1,6 +1,5 @@
-import { PrismaClient, Company, Prisma } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Company, Prisma } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 
 export default class CompanyService {
   static async nextCode(): Promise<number> {

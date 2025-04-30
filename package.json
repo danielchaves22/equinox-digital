@@ -1,0 +1,23 @@
+{
+  "name": "zenit-monorepo",
+  "private": true,
+  "workspaces": [
+    "core-backend",
+    "core-frontend"
+  ],
+  "scripts": {
+    "dev:core-backend": "pnpm --filter core-backend dev",
+    "dev:core-frontend": "pnpm --filter core-frontend dev"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "prisma",
+      "@prisma/engines",
+      "bcrypt",
+      "esbuild",
+      "sharp",
+      "@scarf/scarf"
+    ]
+  }
+}

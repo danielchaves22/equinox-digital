@@ -1,9 +1,7 @@
 import request from 'supertest';
 import app from '../src/app';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './setup';
 import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
 
 describe('Company routes (RBAC)', () => {
   let adminToken: string;

@@ -2,10 +2,8 @@
 
 import request from 'supertest';
 import app from '../src/app';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './setup';
 import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
 
 describe('Auth routes', () => {
   const testEmail = 'test@example.com';

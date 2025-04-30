@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { PrismaClient, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import UserService from '../services/user.service';
 import { logger } from '../utils/logger';
 
-const prisma = new PrismaClient();
 const EQUINOX_COMPANY_CODE = 0;
 
 /**

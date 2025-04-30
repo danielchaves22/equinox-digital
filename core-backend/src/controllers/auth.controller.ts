@@ -1,10 +1,8 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { generateToken } from '../utils/jwt';
 import { logger } from '../utils/logger';
-
-const prisma = new PrismaClient();
 
 /**
  * Registro desabilitado via API pública.
@@ -40,7 +38,7 @@ export async function login(req: Request, res: Response) {
       where: { userId: user.id },
       select: { companyId: true }
     });
-    const companyIds = userCompanies.map((uc) => uc.companyId);
+    const companyIds = userCompanies.map((uc: { companyId: number }) => uc.companyId);
 
     // @ts-ignore
     const role = user.role;

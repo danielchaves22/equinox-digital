@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import CompanyService from '../services/company.service';
 import { logger } from '../utils/logger';
-
-const prisma = new PrismaClient();
 
 /**
  * Extrai do token o role do usuário autenticado.
