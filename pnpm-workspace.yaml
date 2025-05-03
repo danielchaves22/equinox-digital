@@ -1,3 +1,5 @@
 packages:
-- 'core-backend'
-- 'core-frontend'
+  - 'core-backend'
+  - 'core-frontend'
+  - 'zenit-backend'
+  - 'zenit-frontend'

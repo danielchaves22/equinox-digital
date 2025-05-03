@@ -1,17 +1,21 @@
+// core-backend/prisma/schema.prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["core"]
 }
 
 generator client {
-  provider = "prisma-client-js"
-  binaryTargets = ["native"]
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 enum Role {
   ADMIN
   SUPERUSER
   USER
+  
+  @@schema("core")
 }
 
 model User {
@@ -23,6 +27,8 @@ model User {
   companies UserCompany[]
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+  
+  @@schema("core")
 }
 
 model Company {
@@ -34,6 +40,8 @@ model Company {
   groups    CompanyGroup[]
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+  
+  @@schema("core")
 }
 
 model CompanyGroup {
@@ -42,6 +50,8 @@ model CompanyGroup {
   companies Company[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  
+  @@schema("core")
 }
 
 model UserCompany {
@@ -53,4 +63,5 @@ model UserCompany {
   company   Company @relation(fields: [companyId], references: [id])
 
   @@unique([userId, companyId])
+  @@schema("core")
 }

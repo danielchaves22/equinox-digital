@@ -3,11 +3,16 @@
   "private": true,
   "workspaces": [
     "core-backend",
-    "core-frontend"
+    "core-frontend",
+    "zenit-backend",
+    "zenit-frontend"
   ],
   "scripts": {
     "dev:core-backend": "pnpm --filter core-backend dev",
-    "dev:core-frontend": "pnpm --filter core-frontend dev"
+    "dev:core-frontend": "pnpm --filter core-frontend dev",
+    "dev:zenit-backend": "pnpm --filter zenit-backend dev",
+    "dev:zenit-frontend": "pnpm --filter zenit-frontend dev",
+    "dev:all": "pnpm -r dev"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

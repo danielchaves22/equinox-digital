@@ -50,3 +50,24 @@ export async function login(req: Request, res: Response) {
     return res.status(500).json({ error: 'Erro interno ao realizar login.' });
   }
 }
+
+// core-backend/src/controllers/auth.controller.ts (adicionar o seguinte método)
+
+/**
+ * GET /api/auth/verify
+ * Endpoint para verificar validade de token JWT
+ * Utilizado por outros serviços no ambiente de microserviços
+ */
+export async function verifyToken(req: Request, res: Response) {
+  // O token já foi verificado pelo middleware de autenticação
+  // Portanto, req.user já contém os dados decodificados do token
+  
+  // Retornar apenas as informações necessárias
+  const userInfo = {
+    userId: req.user?.id,
+    role: req.user?.role,
+    companyIds: req.user?.companyIds || []
+  };
+  
+  return res.status(200).json(userInfo);
+}

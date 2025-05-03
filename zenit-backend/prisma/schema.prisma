@@ -1,0 +1,129 @@
+// zenit-backend/prisma/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["core", "zenit"]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+// Referência aos modelos do core
+model User {
+  id        Int                    @id @default(autoincrement())
+  email     String                 @unique
+  password  String
+  name      String
+  role      String
+  
+  // Relações com modelos do Zenit
+  financialAccounts      FinancialAccount[]
+  financialTransactions  FinancialTransaction[]
+  
+  @@schema("core")
+}
+
+model Company {
+  id        Int     @id @default(autoincrement())
+  name      String
+  address   String?
+  code      Int     @unique
+  
+  // Relações com modelos do Zenit
+  financialAccounts          FinancialAccount[]
+  financialTransactions      FinancialTransaction[]
+  financialCategories        FinancialCategory[]
+  financialAccountingPlans   FinancialAccountingPlan[]
+  
+  @@schema("core")
+}
+
+// Modelos específicos do Zenit (schema zenit)
+model FinancialAccount {
+  id          Int      @id @default(autoincrement()) 
+  name        String
+  type        String   // checking, savings, credit_card, etc.
+  balance     Decimal  @default(0)
+  accountNumber String?
+  bankName     String?
+  isActive     Boolean @default(true)
+  
+  // Multi-tenancy
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   Int
+  
+  // Auditoria
+  createdBy   User     @relation(fields: [userId], references: [id])
+  userId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relacionamentos
+  transactions FinancialTransaction[]
+  
+  @@schema("zenit")
+}
+
+model FinancialCategory {
+  id          Int      @id @default(autoincrement())
+  name        String
+  type        String   // income, expense
+  color       String?  // código de cor para UI
+  
+  // Multi-tenancy
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   Int
+  
+  // Relacionamentos
+  transactions FinancialTransaction[]
+  
+  @@schema("zenit")
+}
+
+model FinancialTransaction {
+  id          Int      @id @default(autoincrement())
+  description String
+  amount      Decimal
+  date        DateTime
+  type        String   // income, expense, transfer
+  status      String   // pending, completed, cancelled
+  notes       String?
+  
+  // Relacionamentos
+  account     FinancialAccount  @relation(fields: [accountId], references: [id])
+  accountId   Int
+  category    FinancialCategory? @relation(fields: [categoryId], references: [id])
+  categoryId  Int?
+  
+  // Multi-tenancy
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   Int
+  
+  // Auditoria
+  createdBy   User     @relation(fields: [userId], references: [id])
+  userId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@schema("zenit")
+}
+
+// Modelo para plano de contas, útil para relatórios financeiros
+model FinancialAccountingPlan {
+  id          Int      @id @default(autoincrement())
+  code        String   // código contábil, ex: "1.1.01"
+  name        String
+  type        String   // asset, liability, equity, revenue, expense
+  
+  // Multi-tenancy
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   Int
+  
+  // Auditoria
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@schema("zenit")
+}
