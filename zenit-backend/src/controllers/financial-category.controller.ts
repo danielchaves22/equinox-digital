@@ -11,8 +11,7 @@ export class FinancialCategoryController {
   static async createFinancialCategory(req: Request, res: Response) {
     try {
       const { name, type, color } = req.body;
-      const { companyIds } = req.user!;
-      const companyId = Number(req.body.companyId || companyIds[0]);
+      const companyId = req.currentCompanyId!; // Usa o validado pelo middleware
       
       // Validação básica
       if (!name || !type) {
@@ -44,8 +43,7 @@ export class FinancialCategoryController {
    */
   static async listFinancialCategories(req: Request, res: Response) {
     try {
-      const { companyIds } = req.user!;
-      const companyId = Number(req.query.companyId || companyIds[0]);
+      const companyId = req.currentCompanyId!; // Usa o validado pelo middleware
       const type = req.query.type as string | undefined;
       
       // Validar tipo se fornecido
@@ -68,8 +66,7 @@ export class FinancialCategoryController {
   static async getFinancialCategory(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      const { companyIds } = req.user!;
-      const companyId = Number(req.query.companyId || companyIds[0]);
+      const companyId = req.currentCompanyId!; // Usa o validado pelo middleware
       
       if (isNaN(id)) {
         return res.status(400).json({ error: 'ID inválido' });
@@ -95,8 +92,7 @@ export class FinancialCategoryController {
   static async updateFinancialCategory(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      const { companyIds } = req.user!;
-      const companyId = Number(req.body.companyId || companyIds[0]);
+      const companyId = req.currentCompanyId!; // Usa o validado pelo middleware
       const { name, type, color } = req.body;
       
       if (isNaN(id)) {
@@ -133,8 +129,7 @@ export class FinancialCategoryController {
   static async deleteFinancialCategory(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      const { companyIds } = req.user!;
-      const companyId = Number(req.query.companyId || companyIds[0]);
+      const companyId = req.currentCompanyId!; // Usa o validado pelo middleware
       
       if (isNaN(id)) {
         return res.status(400).json({ error: 'ID inválido' });

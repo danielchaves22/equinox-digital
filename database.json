@@ -1,0 +1,23 @@
+// root/database.json
+{
+    "core": {
+      "driver": "pg",
+      "host": "localhost",
+      "port": 5432,
+      "database": "zenit",
+      "schema": "core",
+      "user": "postgres",
+      "password": "senha",
+      "migrations-dir": "./migrations/core"
+    },
+    "zenit": {
+      "driver": "pg",
+      "host": "localhost",
+      "port": 5432,
+      "database": "zenit",
+      "schema": "zenit",
+      "user": "postgres",
+      "password": "senha",
+      "migrations-dir": "./migrations/zenit"
+    }
+  }

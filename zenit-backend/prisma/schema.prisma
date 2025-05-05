@@ -8,6 +8,7 @@ datasource db {
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["multiSchema"]
+  output          = "../src/generated/client"
 }
 
 // Referência aos modelos do core

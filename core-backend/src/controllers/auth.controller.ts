@@ -63,6 +63,7 @@ export async function verifyToken(req: Request, res: Response) {
   // Portanto, req.user já contém os dados decodificados do token
   
   // Retornar apenas as informações necessárias
+  console.log(req.user)
   const userInfo = {
     userId: req.user?.id,
     role: req.user?.role,

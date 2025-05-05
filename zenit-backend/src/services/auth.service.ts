@@ -16,6 +16,7 @@ export class AuthService {
    */
   static async verifyToken(token: string): Promise<UserInfo | null> {
     try {
+      console.log(CORE_API_URL)
       const response = await axios.get(`${CORE_API_URL}/auth/verify`, {
         headers: {
           Authorization: `Bearer ${token}`

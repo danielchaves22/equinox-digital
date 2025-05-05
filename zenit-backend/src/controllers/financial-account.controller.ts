@@ -11,8 +11,8 @@ export class FinancialAccountController {
   static async createFinancialAccount(req: Request, res: Response) {
     try {
       const { name, type, balance, accountNumber, bankName } = req.body;
-      const { userId, companyIds } = req.user!;
-      const companyId = Number(req.body.companyId || companyIds[0]);
+      const { userId } = req.user!;
+      const companyId = req.currentCompanyId!; // Usa o validado pelo middleware
       
       // Validação básica
       if (!name || !type || balance === undefined) {
@@ -42,8 +42,7 @@ export class FinancialAccountController {
    */
   static async listFinancialAccounts(req: Request, res: Response) {
     try {
-      const { companyIds } = req.user!;
-      const companyId = Number(req.query.companyId || companyIds[0]);
+      const companyId = req.currentCompanyId!; // Usa o validado pelo middleware
       
       const accounts = await FinancialAccountService.listFinancialAccounts(companyId);
       return res.status(200).json(accounts);
@@ -60,8 +59,7 @@ export class FinancialAccountController {
   static async getFinancialAccount(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      const { companyIds } = req.user!;
-      const companyId = Number(req.query.companyId || companyIds[0]);
+      const companyId = req.currentCompanyId!; // Usa o validado pelo middleware
       
       if (isNaN(id)) {
         return res.status(400).json({ error: 'ID inválido' });
@@ -87,8 +85,7 @@ export class FinancialAccountController {
   static async updateFinancialAccount(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      const { companyIds } = req.user!;
-      const companyId = Number(req.body.companyId || companyIds[0]);
+      const companyId = req.currentCompanyId!; // Usa o validado pelo middleware
       const { name, type, balance, accountNumber, bankName, isActive } = req.body;
       
       if (isNaN(id)) {
@@ -124,8 +121,7 @@ export class FinancialAccountController {
   static async deleteFinancialAccount(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      const { companyIds } = req.user!;
-      const companyId = Number(req.query.companyId || companyIds[0]);
+      const companyId = req.currentCompanyId!; // Usa o validado pelo middleware
       
       if (isNaN(id)) {
         return res.status(400).json({ error: 'ID inválido' });

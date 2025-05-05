@@ -1,5 +1,5 @@
 // zenit-backend/src/lib/prisma-client.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../generated/client';
 import { logger } from '../utils/logger';
 
 // Declaração global para prevenção de múltiplas instâncias

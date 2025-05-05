@@ -22,6 +22,24 @@ services:
     networks:
       - zenit_network
 
+  # === pgAdmin ===
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: zenit-pgadmin
+    restart: always
+    ports:
+      - '5050:80'
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - db
+    networks:
+      - zenit_network
+
   # === Core Backend (API de Autenticação/Autorização) ===
   core-backend:
     build:
@@ -93,3 +111,4 @@ services:
 
 volumes:
   postgres-data:
+  pgadmin-data:

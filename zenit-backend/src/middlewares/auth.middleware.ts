@@ -7,6 +7,9 @@ export async function authMiddleware(
   res: Response, 
   next: NextFunction
 ) {
+  console.log('=== AUTH MIDDLEWARE DEBUG ===');
+  console.log('Headers:', req.headers);
+  
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -19,14 +22,18 @@ export async function authMiddleware(
     // Verifica o token com o core-backend
     const userInfo = await AuthService.verifyToken(token);
     
+    console.log('userInfo:', userInfo);
+    
     if (!userInfo) {
       return res.status(401).json({ error: 'Token inválido' });
     }
     
     // Salva as informações do usuário para uso nos controllers
     req.user = userInfo;
+    console.log('req.user after assignment:', req.user);
     next();
   } catch (error) {
+    console.error('Error verifying token:', error);
     return res.status(401).json({ error: 'Erro ao validar token' });
   }
 }

@@ -7,7 +7,13 @@
     "test": "jest --runInBand",
     "start": "node dist/server.js",
     "dev": "nodemon --exec ts-node src/server.ts",
-    "build": "prisma generate && tsc --project tsconfig.build.json"
+    "build": "prisma generate && tsc --project tsconfig.build.json",
+    
+    "migrate": "node-pg-migrate --configFile db/config.js up",
+    "migrate:create": "node-pg-migrate --configFile db/config.js create",
+    "migrate:down": "node-pg-migrate --configFile db/config.js down",
+    "migrate:status": "node-pg-migrate --configFile db/config.js status",
+    "prisma:generate": "prisma generate"
   },
   "repository": {
     "type": "git",

@@ -1,3 +1,4 @@
+# root/.gitignore
 # Dependências do Node
 node_modules/
 
@@ -39,8 +40,9 @@ Thumbs.db
 # Cobertura de testes
 coverage/
 
-# Arquivos/pastas gerados pelo Prisma (se houver)
+# Arquivos gerados pelo Prisma
 .prisma/
+**/generated/
 
 # Arquivos compactados
 *.zip

@@ -8,11 +8,14 @@
     "zenit-frontend"
   ],
   "scripts": {
-    "dev:core-backend": "pnpm --filter core-backend dev",
-    "dev:core-frontend": "pnpm --filter core-frontend dev",
-    "dev:zenit-backend": "pnpm --filter zenit-backend dev",
-    "dev:zenit-frontend": "pnpm --filter zenit-frontend dev",
-    "dev:all": "pnpm -r dev"
+    "migrate:core": "pnpm --filter core-backend migrate",
+    "migrate:zenit": "pnpm --filter zenit-backend migrate",
+    "migrate:all": "pnpm migrate:core && pnpm migrate:zenit",
+    
+    "migrate:create:core": "pnpm --filter core-backend migrate:create",
+    "migrate:create:zenit": "pnpm --filter zenit-backend migrate:create",
+    "setup:core-only": "pnpm migrate:core && pnpm --filter core-backend prisma:generate",
+    "setup:with-zenit": "pnpm migrate:core && pnpm migrate:zenit && pnpm --filter core-backend prisma:generate && pnpm --filter zenit-backend prisma:generate"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -24,5 +27,8 @@
       "sharp",
       "@scarf/scarf"
     ]
+  },
+  "devDependencies": {
+    "node-pg-migrate": "^7.8.1"
   }
 }
