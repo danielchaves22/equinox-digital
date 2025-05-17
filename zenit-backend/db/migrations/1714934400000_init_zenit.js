@@ -1,4 +1,3 @@
-// root/migrations/zenit/1714934400000_init_zenit.js
 exports.up = (pgm) => {
     // Tabela FinancialAccount
     pgm.createTable('zenit.financial_account', {

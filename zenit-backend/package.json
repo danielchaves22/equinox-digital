@@ -7,10 +7,10 @@
       "build": "prisma generate && tsc -p tsconfig.build.json",
       "start": "node dist/server.js",
       
-      "migrate": "node-pg-migrate up",
-      "migrate:create": "node-pg-migrate create",
-      "migrate:down": "node-pg-migrate down",
-      "migrate:status": "node-pg-migrate status",
+      "migrate": "node-pg-migrate --configFile db/config.js up",
+      "migrate:create": "node-pg-migrate --configFile db/config.js create",
+      "migrate:down": "node-pg-migrate --configFile db/config.js down",
+      "migrate:status": "node-pg-migrate --configFile db/config.js status",
       "prisma:generate": "prisma generate"
     },
     "dependencies": {
